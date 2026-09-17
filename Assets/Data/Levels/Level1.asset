@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fd9eeaed8d0e4a740bd68103da0e3fb7, type: 3}
+  m_Name: Level1
+  m_EditorClassIdentifier: GardenGuardians.Runtime::GardenGuardians.Data.LevelData
+  levelIndex: 1
+  levelTitle: 'Level 1: Garden Perimeter'
+  objectiveDescription: Build turrets along the lane to defend the core.
+  startingEnergy: 100
+  startingLives: 5
+  waves:
+  - {fileID: 11400000, guid: fa6af6099abdfa545bdb95cd3fd929db, type: 2}
