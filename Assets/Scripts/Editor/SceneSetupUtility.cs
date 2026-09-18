@@ -2,7 +2,6 @@
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
-using UnityEngine.InputSystem.UI;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using GardenGuardians.Core;
@@ -82,7 +81,7 @@ namespace GardenGuardians.Editor
             GameObject serviceObj = new GameObject("DailyChallengeService");
             serviceObj.AddComponent<DailyChallengeService>();
 
-            // 5. Canvas & EventSystem (Unity 6 InputSystemUIInputModule)
+            // 5. Canvas & EventSystem
             GameObject canvasObj = new GameObject("Canvas");
             var canvas = canvasObj.AddComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
@@ -94,7 +93,7 @@ namespace GardenGuardians.Editor
 
             GameObject eventSystemObj = new GameObject("EventSystem");
             eventSystemObj.AddComponent<EventSystem>();
-            eventSystemObj.AddComponent<InputSystemUIInputModule>();
+            AttachInputModule(eventSystemObj);
 
             canvasObj.AddComponent<GameUIController>();
 
@@ -138,12 +137,25 @@ namespace GardenGuardians.Editor
 
             GameObject eventSystemObj = new GameObject("EventSystem");
             eventSystemObj.AddComponent<EventSystem>();
-            eventSystemObj.AddComponent<InputSystemUIInputModule>();
+            AttachInputModule(eventSystemObj);
 
             canvasObj.AddComponent<MenuUIController>();
 
             EditorSceneManager.SaveScene(scene);
             Debug.Log("[GardenGuardians] Menu.unity scene setup complete!");
+        }
+
+        private static void AttachInputModule(GameObject eventSystemObj)
+        {
+            var inputModuleType = System.Type.GetType("UnityEngine.InputSystem.UI.InputSystemUIInputModule, Unity.InputSystem");
+            if (inputModuleType != null)
+            {
+                eventSystemObj.AddComponent(inputModuleType);
+            }
+            else
+            {
+                eventSystemObj.AddComponent<StandaloneInputModule>();
+            }
         }
     }
 }

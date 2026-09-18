@@ -3,7 +3,8 @@
     "rootNamespace": "GardenGuardians.Editor",
     "references": [
         "GardenGuardians.Runtime",
-        "Unity.TextMeshPro"
+        "Unity.TextMeshPro",
+        "Unity.InputSystem"
     ],
     "includePlatforms": [
         "Editor"
