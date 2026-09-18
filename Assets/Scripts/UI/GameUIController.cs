@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 using GardenGuardians.Core;
 using GardenGuardians.Gameplay;
 using GardenGuardians.Data;
@@ -38,10 +39,34 @@ namespace GardenGuardians.UI
 
         private void Awake()
         {
-            // If buttons were not pre-baked in the scene, generate the full visual UI dynamically
+            FixEventSystemInputModule();
+
             if (turretButton == null)
             {
                 BuildRuntimeUI();
+            }
+        }
+
+        private void FixEventSystemInputModule()
+        {
+            // Fix Unity 6 Input System conflict: ensure InputSystemUIInputModule is present
+            var eventSystem = FindFirstObjectByType<EventSystem>();
+            if (eventSystem == null)
+            {
+                var esObj = new GameObject("EventSystem");
+                eventSystem = esObj.AddComponent<EventSystem>();
+            }
+
+            var standalone = eventSystem.GetComponent<StandaloneInputModule>();
+            if (standalone != null)
+            {
+                DestroyImmediate(standalone);
+            }
+
+            var inputModule = eventSystem.GetComponent<UnityEngine.InputSystem.UI.InputSystemUIInputModule>();
+            if (inputModule == null)
+            {
+                eventSystem.gameObject.AddComponent<UnityEngine.InputSystem.UI.InputSystemUIInputModule>();
             }
         }
 
@@ -106,7 +131,7 @@ namespace GardenGuardians.UI
             var spawner = FindFirstObjectByType<WaveSpawner>();
             if (spawner != null && waveText != null)
             {
-                waveText.text = $"Wave: {spawner.CurrentWaveIndex} / {spawner.TotalWaves}";
+                waveText.text = $"🌊 Wave: {spawner.CurrentWaveIndex} / {spawner.TotalWaves}";
             }
         }
 
@@ -131,7 +156,7 @@ namespace GardenGuardians.UI
         {
             if (livesText != null)
             {
-                livesText.text = $"Lives: {lives}";
+                livesText.text = $"❤️ Lives: {lives}";
             }
         }
 
@@ -139,7 +164,7 @@ namespace GardenGuardians.UI
         {
             if (energyText != null)
             {
-                energyText.text = $"Energy: {energy}";
+                energyText.text = $"⚡ Energy: {energy}";
             }
         }
 
@@ -148,7 +173,7 @@ namespace GardenGuardians.UI
             if (notificationText != null)
             {
                 notificationText.text = msg;
-                notificationTimer = 2.5f;
+                notificationTimer = 3.0f;
             }
         }
 
@@ -186,7 +211,6 @@ namespace GardenGuardians.UI
 
         private void BuildRuntimeUI()
         {
-            // Load tower data if missing
             if (turretData == null)
             {
                 turretData = ScriptableObject.CreateInstance<TowerData>();
@@ -225,37 +249,40 @@ namespace GardenGuardians.UI
                 wallData.towerColor = new Color(0.5f, 0.55f, 0.6f, 1f);
             }
 
-            // Top Bar
-            GameObject topBar = CreatePanel("TopBar", new Vector2(0, 1), new Vector2(1, 1), new Vector2(0.5f, 1), new Vector2(0, -40), new Vector2(0, 80), new Color(0.1f, 0.13f, 0.18f, 0.92f));
-            livesText = CreateText(topBar, "LivesText", "Lives: 5", 28, new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(40, 0), new Vector2(180, 50), new Color(1f, 0.4f, 0.4f));
-            energyText = CreateText(topBar, "EnergyText", "Energy: 100", 28, new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(240, 0), new Vector2(200, 50), new Color(1f, 0.85f, 0.2f));
-            waveText = CreateText(topBar, "WaveText", "Wave: 0 / 1", 28, new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(460, 0), new Vector2(200, 50), new Color(0.3f, 0.9f, 1f));
-            notificationText = CreateText(topBar, "NotificationText", "", 26, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(40, 0), new Vector2(500, 50), Color.yellow);
+            // Top Glassmorphism HUD Bar
+            GameObject topBar = CreatePanel("TopBar", new Vector2(0, 1), new Vector2(1, 1), new Vector2(0.5f, 1), new Vector2(0, -40), new Vector2(0, 80), new Color(0.08f, 0.12f, 0.18f, 0.92f));
+
+            livesText = CreateText(topBar, "LivesText", "❤️ Lives: 5", 26, new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(30, 0), new Vector2(160, 50), new Color(1f, 0.35f, 0.35f));
+            energyText = CreateText(topBar, "EnergyText", "⚡ Energy: 100", 26, new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(200, 0), new Vector2(180, 50), new Color(1f, 0.85f, 0.2f));
+            waveText = CreateText(topBar, "WaveText", "🌊 Wave: 0 / 1", 26, new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(390, 0), new Vector2(180, 50), new Color(0.3f, 0.85f, 1f));
+
+            notificationText = CreateText(topBar, "NotificationText", "", 24, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(50, 0), new Vector2(500, 50), new Color(1f, 0.92f, 0.4f));
             notificationText.alignment = TextAnchor.MiddleCenter;
 
-            pauseButton = CreateButton(topBar, "PauseButton", "Pause", new Vector2(1, 0.5f), new Vector2(1, 0.5f), new Vector2(1, 0.5f), new Vector2(-160, 0), new Vector2(110, 48), new Color(0.25f, 0.32f, 0.42f));
-            muteButton = CreateButton(topBar, "MuteButton", "Mute", new Vector2(1, 0.5f), new Vector2(1, 0.5f), new Vector2(1, 0.5f), new Vector2(-40, 0), new Vector2(100, 48), new Color(0.25f, 0.32f, 0.42f));
+            pauseButton = CreateButton(topBar, "PauseButton", "⏸️ Pause", new Vector2(1, 0.5f), new Vector2(1, 0.5f), new Vector2(1, 0.5f), new Vector2(-160, 0), new Vector2(110, 48), new Color(0.2f, 0.28f, 0.38f));
+            muteButton = CreateButton(topBar, "MuteButton", "🔊 Mute", new Vector2(1, 0.5f), new Vector2(1, 0.5f), new Vector2(1, 0.5f), new Vector2(-40, 0), new Vector2(100, 48), new Color(0.2f, 0.28f, 0.38f));
 
-            // Bottom Action Bar
-            GameObject bottomBar = CreatePanel("BottomBar", new Vector2(0, 0), new Vector2(1, 0), new Vector2(0.5f, 0), new Vector2(0, 60), new Vector2(0, 120), new Color(0.1f, 0.13f, 0.18f, 0.95f));
-            turretButton = CreateButton(bottomBar, "TurretButton", "Turret (25)", new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(-360, 0), new Vector2(210, 75), new Color(0.18f, 0.5f, 0.85f));
-            slowTowerButton = CreateButton(bottomBar, "SlowTowerButton", "Frost Spire (35)", new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(-120, 0), new Vector2(210, 75), new Color(0.55f, 0.25f, 0.85f));
-            wallButton = CreateButton(bottomBar, "WallButton", "Wall (15)", new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(120, 0), new Vector2(210, 75), new Color(0.42f, 0.48f, 0.55f));
-            startWaveButton = CreateButton(bottomBar, "StartWaveButton", "Start Wave", new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(360, 0), new Vector2(210, 75), new Color(0.18f, 0.75f, 0.38f));
+            // Bottom Action Dock
+            GameObject bottomBar = CreatePanel("BottomBar", new Vector2(0, 0), new Vector2(1, 0), new Vector2(0.5f, 0), new Vector2(0, 65), new Vector2(0, 130), new Color(0.08f, 0.12f, 0.18f, 0.95f));
 
-            // Win Panel
-            winPanel = CreatePanel("WinPanel", new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(500, 320), new Color(0.12f, 0.2f, 0.15f, 0.98f));
-            CreateText(winPanel, "WinTitle", "VICTORY!", 44, new Vector2(0.5f, 0.8f), new Vector2(0.5f, 0.8f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(400, 60), new Color(0.3f, 1f, 0.5f)).alignment = TextAnchor.MiddleCenter;
-            restartButton = CreateButton(winPanel, "RestartButton", "Play Again", new Vector2(0.5f, 0.45f), new Vector2(0.5f, 0.45f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(240, 55), new Color(0.2f, 0.6f, 0.3f));
-            menuButton = CreateButton(winPanel, "MenuButton", "Back to Menu", new Vector2(0.5f, 0.2f), new Vector2(0.5f, 0.2f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(240, 55), new Color(0.35f, 0.4f, 0.48f));
+            turretButton = CreateButton(bottomBar, "TurretButton", "🔫 Turret (25 ⚡)", new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(-360, 0), new Vector2(220, 80), new Color(0.15f, 0.48f, 0.88f));
+            slowTowerButton = CreateButton(bottomBar, "SlowTowerButton", "❄️ Frost Spire (35 ⚡)", new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(-120, 0), new Vector2(220, 80), new Color(0.58f, 0.22f, 0.88f));
+            wallButton = CreateButton(bottomBar, "WallButton", "🧱 Wall (15 ⚡)", new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(120, 0), new Vector2(220, 80), new Color(0.35f, 0.42f, 0.52f));
+            startWaveButton = CreateButton(bottomBar, "StartWaveButton", "▶️ Start Wave", new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(360, 0), new Vector2(220, 80), new Color(0.12f, 0.72f, 0.35f));
+
+            // Victory Panel
+            winPanel = CreatePanel("WinPanel", new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(520, 340), new Color(0.08f, 0.18f, 0.12f, 0.98f));
+            CreateText(winPanel, "WinTitle", "🎉 VICTORY! 🎉", 42, new Vector2(0.5f, 0.8f), new Vector2(0.5f, 0.8f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(400, 60), new Color(0.3f, 1f, 0.5f)).alignment = TextAnchor.MiddleCenter;
+            restartButton = CreateButton(winPanel, "RestartButton", "Play Again", new Vector2(0.5f, 0.45f), new Vector2(0.5f, 0.45f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(240, 55), new Color(0.18f, 0.65f, 0.32f));
+            menuButton = CreateButton(winPanel, "MenuButton", "Back to Menu", new Vector2(0.5f, 0.2f), new Vector2(0.5f, 0.2f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(240, 55), new Color(0.3f, 0.38f, 0.48f));
             winPanel.SetActive(false);
 
-            // Loss Panel
-            lossPanel = CreatePanel("LossPanel", new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(500, 320), new Color(0.22f, 0.12f, 0.12f, 0.98f));
-            CreateText(lossPanel, "LossTitle", "DEFEAT!", 44, new Vector2(0.5f, 0.8f), new Vector2(0.5f, 0.8f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(400, 60), new Color(1f, 0.3f, 0.3f)).alignment = TextAnchor.MiddleCenter;
-            Button restartLoss = CreateButton(lossPanel, "RestartLossButton", "Retry", new Vector2(0.5f, 0.45f), new Vector2(0.5f, 0.45f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(240, 55), new Color(0.8f, 0.25f, 0.25f));
+            // Defeat Panel
+            lossPanel = CreatePanel("LossPanel", new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(520, 340), new Color(0.22f, 0.08f, 0.08f, 0.98f));
+            CreateText(lossPanel, "LossTitle", "💀 CORE BREACHED! 💀", 38, new Vector2(0.5f, 0.8f), new Vector2(0.5f, 0.8f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(450, 60), new Color(1f, 0.3f, 0.3f)).alignment = TextAnchor.MiddleCenter;
+            Button restartLoss = CreateButton(lossPanel, "RestartLossButton", "Retry", new Vector2(0.5f, 0.45f), new Vector2(0.5f, 0.45f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(240, 55), new Color(0.82f, 0.22f, 0.22f));
             restartLoss.onClick.AddListener(OnRestartClicked);
-            Button menuLoss = CreateButton(lossPanel, "MenuLossButton", "Back to Menu", new Vector2(0.5f, 0.2f), new Vector2(0.5f, 0.2f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(240, 55), new Color(0.35f, 0.4f, 0.48f));
+            Button menuLoss = CreateButton(lossPanel, "MenuLossButton", "Back to Menu", new Vector2(0.5f, 0.2f), new Vector2(0.5f, 0.2f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(240, 55), new Color(0.3f, 0.38f, 0.48f));
             menuLoss.onClick.AddListener(OnMenuClicked);
             lossPanel.SetActive(false);
         }
@@ -310,8 +337,9 @@ namespace GardenGuardians.UI
 
             var btn = obj.AddComponent<Button>();
             ColorBlock cb = btn.colors;
-            cb.highlightedColor = col * 1.25f;
-            cb.pressedColor = col * 0.75f;
+            cb.normalColor = col;
+            cb.highlightedColor = Color.Lerp(col, Color.white, 0.3f);
+            cb.pressedColor = col * 0.7f;
             btn.colors = cb;
 
             GameObject textObj = new GameObject("Text");

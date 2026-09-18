@@ -1,10 +1,11 @@
 using UnityEngine;
+using UnityEngine.EventSystems;
 using GardenGuardians.Pathfinding;
 
 namespace GardenGuardians.Gameplay
 {
     [RequireComponent(typeof(SpriteRenderer), typeof(BoxCollider2D))]
-    public class CellView : MonoBehaviour
+    public class CellView : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler
     {
         public int Row { get; private set; }
         public int Column { get; private set; }
@@ -14,8 +15,9 @@ namespace GardenGuardians.Gameplay
 
         private BoardController board;
         private SpriteRenderer spriteRenderer;
-        private Color baseColor = new Color(0.22f, 0.28f, 0.35f, 0.9f); // Sleek grid tile
-        private Color highlightColor = new Color(1.0f, 0.9f, 0.3f, 1.0f); // Tapped/selected yellow
+        private Color baseColor = Color.white;
+        private Color highlightColor = new Color(1.0f, 0.95f, 0.3f, 1.0f);
+        private bool isHovered = false;
 
         private void Awake()
         {
@@ -28,29 +30,53 @@ namespace GardenGuardians.Gameplay
             Column = column;
             board = owner;
 
-            // Start cell is (0,2) in (x,y) -> Row 2, Col 0
-            // Goal cell is (7,2) in (x,y) -> Row 2, Col 7
             IsStart = (row == 2 && column == 0);
             IsGoal = (row == 2 && column == 7);
 
+            // Assign high-res specialized sprites if available
             if (IsStart)
             {
-                baseColor = new Color(0.18f, 0.8f, 0.44f, 1f); // Vibrant Green
-                Occupied = false; // Cannot build on start
+                var startSprite = Resources.Load<Sprite>("Sprites/portal_start") ?? LoadAssetSprite("Assets/Sprites/portal_start.png");
+                if (startSprite != null && spriteRenderer != null)
+                {
+                    spriteRenderer.sprite = startSprite;
+                }
+                baseColor = Color.white;
+                Occupied = false;
             }
             else if (IsGoal)
             {
-                baseColor = new Color(0.95f, 0.45f, 0.15f, 1f); // Vibrant Orange
-                Occupied = false; // Cannot build on goal
+                var goalSprite = Resources.Load<Sprite>("Sprites/core_goal") ?? LoadAssetSprite("Assets/Sprites/core_goal.png");
+                if (goalSprite != null && spriteRenderer != null)
+                {
+                    spriteRenderer.sprite = goalSprite;
+                }
+                baseColor = Color.white;
+                Occupied = false;
             }
             else
             {
-                // Checkerboard subtle pattern for visual clarity
+                var tileSprite = Resources.Load<Sprite>("Sprites/cell_tile_highres") ?? LoadAssetSprite("Assets/Sprites/cell_tile_highres.png");
+                if (tileSprite != null && spriteRenderer != null)
+                {
+                    spriteRenderer.sprite = tileSprite;
+                }
+
+                // Subtle alternating checkerboard tint for tactical contrast
                 bool isAlt = (row + column) % 2 == 1;
-                baseColor = isAlt ? new Color(0.20f, 0.25f, 0.32f, 0.95f) : new Color(0.24f, 0.30f, 0.38f, 0.95f);
+                baseColor = isAlt ? new Color(0.85f, 0.90f, 0.95f, 1f) : Color.white;
             }
 
             ResetColor();
+        }
+
+        private Sprite LoadAssetSprite(string path)
+        {
+#if UNITY_EDITOR
+            return UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>(path);
+#else
+            return null;
+#endif
         }
 
         public void ResetColor()
@@ -69,13 +95,34 @@ namespace GardenGuardians.Gameplay
             }
         }
 
-        public void SetOccupiedColor(Color color)
+        // Pointer event implementations (works 100% with Unity New Input System & Mobile)
+        public void OnPointerClick(PointerEventData eventData)
         {
-            baseColor = color;
+            TriggerSelect();
+        }
+
+        public void OnPointerEnter(PointerEventData eventData)
+        {
+            isHovered = true;
+            if (!Occupied && !IsStart && !IsGoal && spriteRenderer != null)
+            {
+                spriteRenderer.color = Color.Lerp(baseColor, highlightColor, 0.4f);
+            }
+        }
+
+        public void OnPointerExit(PointerEventData eventData)
+        {
+            isHovered = false;
             ResetColor();
         }
 
+        // Fallback for direct mouse down
         private void OnMouseDown()
+        {
+            TriggerSelect();
+        }
+
+        private void TriggerSelect()
         {
             if (board != null)
             {
