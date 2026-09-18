@@ -1,7 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
-using TMPro;
 using GardenGuardians.Services;
 
 namespace GardenGuardians.UI
@@ -14,20 +13,19 @@ namespace GardenGuardians.UI
         [SerializeField] private Button level3Button;
 
         [Header("Daily Challenge Display")]
-        [SerializeField] private TextMeshProUGUI challengeDateText;
-        [SerializeField] private TextMeshProUGUI challengeDetailsText;
-        [SerializeField] private TextMeshProUGUI offlineStatusBadge;
+        [SerializeField] private Text challengeDateText;
+        [SerializeField] private Text challengeDetailsText;
+        [SerializeField] private Text offlineStatusBadge;
         [SerializeField] private Button dailyPlayButton;
 
         [Header("Settings")]
         [SerializeField] private Button soundToggleButton;
-        [SerializeField] private TextMeshProUGUI soundButtonText;
+        [SerializeField] private Text soundButtonText;
 
         private void Start()
         {
             var save = SaveService.Load();
 
-            // Setup level buttons
             if (level1Button != null)
                 level1Button.onClick.AddListener(() => LoadLevel(1));
 
@@ -45,7 +43,6 @@ namespace GardenGuardians.UI
                 level3Button.onClick.AddListener(() => LoadLevel(3));
             }
 
-            // Setup Daily Challenge
             if (DailyChallengeService.Instance != null)
             {
                 DailyChallengeService.Instance.OnChallengeLoaded += OnDailyChallengeReceived;
@@ -57,7 +54,6 @@ namespace GardenGuardians.UI
                 dailyPlayButton.onClick.AddListener(PlayDailyChallenge);
             }
 
-            // Audio toggle
             if (soundToggleButton != null)
             {
                 soundToggleButton.onClick.AddListener(ToggleSound);
@@ -81,12 +77,12 @@ namespace GardenGuardians.UI
                 challengeDateText.text = $"Date: {challenge.date}";
 
             if (challengeDetailsText != null)
-                challengeDetailsText.text = $"Preset: {challenge.wavePreset} | Starting Energy: {challenge.startingEnergy}";
+                challengeDetailsText.text = $"Preset: {challenge.wavePreset} | Energy: {challenge.startingEnergy}";
 
             if (offlineStatusBadge != null)
             {
                 offlineStatusBadge.gameObject.SetActive(challenge.isOfflineFallback);
-                offlineStatusBadge.text = challenge.isOfflineFallback ? "[Offline Mode Active]" : "[Online Challenge]";
+                offlineStatusBadge.text = challenge.isOfflineFallback ? "[Offline Mode]" : "[Online Challenge]";
             }
         }
 
@@ -114,7 +110,7 @@ namespace GardenGuardians.UI
             var save = SaveService.Load();
             if (soundButtonText != null)
             {
-                soundButtonText.text = save.soundEnabled ? "🔊 Sound: ON" : "🔇 Sound: OFF";
+                soundButtonText.text = save.soundEnabled ? "Sound: ON" : "Sound: OFF";
             }
         }
     }
